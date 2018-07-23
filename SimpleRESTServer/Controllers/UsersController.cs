@@ -111,6 +111,7 @@ namespace SimpleRESTServer.Controllers
         
         /// <summary>
         /// Creates a new User and return the new ID assigned
+        /// If the user already exists on database, return error.
         /// POST: api/users/create/(user)
         /// </summary>
         /// <param name="user"></param>
@@ -123,11 +124,26 @@ namespace SimpleRESTServer.Controllers
             {
                 return BadRequest(ModelState);
             }
+            else
+            {
+                var dbUser = from t in _context.User.Include("user")
+                            where t.Name == user.Name
+                            select t;
 
-            _context.User.Add(user);
-            await _context.SaveChangesAsync();
+                if (dbUser.Count() > 0)
+                {
+                    return BadRequest("User already exists");
+                }
+                else
+                {
 
-            return CreatedAtAction("GetUser", new { id = user.ID }, user);
+                    _context.User.Add(user);
+                    await _context.SaveChangesAsync();
+
+                    return CreatedAtAction("GetUser", new { id = user.ID }, user);
+                }
+            }
+
         }
 
         
